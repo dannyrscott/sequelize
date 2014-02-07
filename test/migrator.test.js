@@ -28,6 +28,19 @@ describe(Support.getTestDialectTeaser("Migrator"), function() {
   })
 
   describe('getUndoneMigrations', function() {
+    it("supports coffee files", function(done) {
+      this.init({
+        filesFilter: /\.coffee$/,
+        to: 20111130161100
+      }, function(migrator) {
+        migrator.getUndoneMigrations(function(err, migrations) {
+          expect(err).to.be.null
+          expect(migrations).to.have.length(1)
+          done()
+        })
+      })
+    })
+
     it("returns no files if timestamps are after the files timestamp", function(done) {
       this.init({ from: 20140101010101 }, function(migrator) {
         migrator.getUndoneMigrations(function(err, migrations) {
@@ -107,6 +120,24 @@ describe(Support.getTestDialectTeaser("Migrator"), function() {
     })
 
     describe('executions', function() {
+      it("supports coffee files", function(done) {
+        var self = this
+
+        this.init({
+          filesFilter: /\.coffee$/,
+          to: 20111130161100
+        }, function(migrator) {
+          self.migrator = migrator
+          self.migrator.migrate().success(function() {
+            self.sequelize.getQueryInterface().showAllTables().success(function(tableNames) {
+              tableNames = tableNames.filter(function(e){ return e != 'SequelizeMeta' })
+              expect(tableNames).to.eql([ 'Person' ])
+              done()
+            })
+          })
+        })
+      })
+
       it("executes migration #20111117063700 and correctly creates the table", function(done) {
         this.sequelize.getQueryInterface().showAllTables().success(function(tableNames) {
           tableNames = tableNames.filter(function(e){ return e != 'SequelizeMeta' })
@@ -309,7 +340,7 @@ describe(Support.getTestDialectTeaser("Migrator"), function() {
       })
     })
   })
-  
+
   if (dialect.match(/^postgres/)) {
 
     describe('function migrations', function() {
